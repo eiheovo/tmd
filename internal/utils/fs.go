@@ -105,6 +105,32 @@ func UniquePath(path string) (string, error) {
 	}
 }
 
+// 生成推文文件名：推文ID_截断50字符的文件名
+// 50个中文字符 = 最多150字节(UTF-8)，加上ID和下划线，总长度安全
+const maxTextRunes = 50
+
+func TweetFileName(tweetId uint64, text string) string {
+	// 先清理文本
+	text = reUrl.ReplaceAllString(text, "")
+	text = reWinNonSupport.ReplaceAllString(text, "")
+	text = strings.ReplaceAll(text, "\r", "")
+	text = strings.ReplaceAll(text, "\n", " ")
+	text = strings.TrimSpace(text)
+
+	// 按字符（rune）截断到50个字符
+	runes := []rune(text)
+	if len(runes) > maxTextRunes {
+		runes = runes[:maxTextRunes]
+	}
+	text = strings.TrimSpace(string(runes))
+
+	// 格式：推文ID_文件名
+	if text == "" {
+		return fmt.Sprintf("%d", tweetId)
+	}
+	return fmt.Sprintf("%d_%s", tweetId, text)
+}
+
 func GetExtFromUrl(u string) (string, error) {
 	pu, err := url.Parse(u)
 	if err != nil {
